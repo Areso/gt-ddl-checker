@@ -26,23 +26,29 @@ def get_migration_type(migration):
     migration = migration.lower()
     admin_functions = ["analyze table", "repair table", "optimize table"]
     if   "drop database" in migration:
-        return "drop database"
+        return "drop database", 10
     elif "drop table" in migration:
-        return "drop table"
+        return "drop table", 9
     elif "drop view" in migration:
-        return "drop view"
+        return "drop view", 3
     elif "alter table" in migration:
-        return "alter table"
+        if "add column" in migration:
+            if "after" in migration:
+                return "adding column after specific column requires table rebuild"
+            if " first" in migration:
+                return "adding column at 0 pos requires table rebuild"
+            if "not null" in migration:
+                return "adding a value to existing rows requires table rebuild"
     elif "drop index" in migration:
-        return "drop index" #"alter table"
+        return "drop index", 5 #"alter table"
     elif "rename table" in migration:
-        return "rename table"
+        return "rename table", 5
     elif "truncate table" in migration:
-        return "truncate table"
+        return "truncate table", 8
     elif any(admin_func in migration for admin_func in admin_functions):
-        return "admin func"
+        return "admin func", 10
     else:
-        return "not defined"
+        return "not defined", -1
 
 
 @app.route('/check_migration')
@@ -50,8 +56,11 @@ def check_migration():
     reqdata            = request.get_data().decode()
     reqobj             = json.loads(reqdata)
     migration: str     = reqobj.get("migration",None)
-    migration_type     = get_migration_type(migration)
-    return migration_type
+    
+    migration_type, risk     = get_migration_type(migration)
+    if 
+    
+    return migration_type, risk, None
 
 
 if __name__ == '__main__':
