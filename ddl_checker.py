@@ -95,21 +95,29 @@ def get_affected_db_table(migration: str)->tuple[str, str]:
         tablename = altering_obj
         return dbname, tablename
 
+def check_size(cluster, db, aff_table)->tuple[float, float]:
+    if cluster not in myconfig.keys:
+        return -1, -1
+    return 0, 0
 
 @app.route('/check_migration')
 def check_migration():
     reqdata            = request.get_data().decode()
     reqobj             = json.loads(reqdata)
     migration: str     = reqobj.get("migration",None).lower()
+    cluster: str       = reqobj.get("cluster",None).lower()
     
     migration_type, risk, size_dep  = get_migration_type(migration)
 
     if size_dep:
         db, aff_table = get_affected_db_table(migration)
-    
+    if aff_table is not None:
+        size, length = check_size(cluster, db, aff_table)
+
     return migration_type, risk, None
 
 
 if __name__ == '__main__':
     myconfig = {}
+    read_ini("config.ini")
     app.run(debug=True, port=5555)
